@@ -1,1 +1,7 @@
-
+git clone https://github.com/vnvieiraa/leitor-curriculos.git
+cd leitor-curriculos
+git checkout RH
+# Edit .github/workflows/main.yml and paste the content above
+git add .github/workflows/main.yml
+git commit -m "Configure GitHub Actions workflow for CI/CD pipeline"
+git push origin RH
