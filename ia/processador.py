@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import json
+from typing import Any
 
 
 def processar_curriculo(texto: str, *, traduzir: bool = False) -> str:
@@ -47,3 +49,47 @@ def processar_curriculo(texto: str, *, traduzir: bool = False) -> str:
     if not resultado:
         raise RuntimeError("A API de IA retornou uma resposta vazia.")
     return resultado
+
+
+def analisar_curriculos_com_ia(curriculos: list[dict[str, str]]) -> list[dict[str, Any]]:
+    """Extrai dados estruturados de currículos usando a API da OpenAI."""
+    if not curriculos:
+        raise ValueError("Envie pelo menos um currículo.")
+
+    chave = os.getenv("OPENAI_API_KEY")
+    if not chave:
+        raise RuntimeError(
+            "OPENAI_API_KEY não configurada no servidor. "
+            "Defina a variável antes de iniciar a API."
+        )
+
+    try:
+        from openai import APIError, OpenAI
+    except ImportError as erro:
+        raise RuntimeError("Instale a dependência 'openai' para usar a IA.") from erro
+
+    prompt = (
+        "Analise os currículos abaixo para triagem técnica. Retorne somente JSON válido "
+        "com uma lista na chave results. Cada item deve conter name, candidateName, "
+        "hasTechnology (boolean), hasDatabase (boolean), technologies (lista de strings), "
+        "databases (lista de strings), years (número) e notes (string). Não invente "
+        "informações; use 0 ou listas vazias quando algo não estiver no texto.\n\n"
+        f"Currículos:\n{json.dumps(curriculos, ensure_ascii=False)}"
+    )
+    cliente = OpenAI(api_key=chave)
+    try:
+        resposta = cliente.responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+            input=prompt,
+        )
+    except APIError as erro:
+        raise RuntimeError(f"Falha na comunicação com a API de IA: {erro}") from erro
+
+    try:
+        dados = json.loads(resposta.output_text)
+        resultados = dados["results"]
+    except (json.JSONDecodeError, KeyError, TypeError) as erro:
+        raise ValueError("A IA retornou um formato de análise inválido.") from erro
+    if not isinstance(resultados, list):
+        raise ValueError("A IA retornou resultados inválidos.")
+    return resultados

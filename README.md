@@ -25,6 +25,24 @@ $env:OPENAI_API_KEY="sua-chave-aqui"
 
 ## Execução
 
+Para usar a interface web com integração de IA:
+
+```bash
+export OPENAI_API_KEY="sua-chave-aqui"
+python server.py
+```
+
+Em outro terminal, sirva a página:
+
+```bash
+python -m http.server 4173
+```
+
+Abra `http://127.0.0.1:4173/index.html` e use **Analisar com IA**. A chave
+permanece no servidor e nunca é enviada ao navegador.
+
+Para usar a interface desktop:
+
 ```bash
 python app.py
 ```
