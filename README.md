@@ -14,13 +14,13 @@ pip install -r requirements.txt
 Defina a chave da API antes de usar os botões de processamento:
 
 ```bash
-export OPENAI_API_KEY="vnvieira"
+export OPENAI_API_KEY="sua-chave-aqui"
 ```
 
 No Windows PowerShell:
 
 ```powershell
-$env:OPENAI_API_KEY="vnvieira"
+$env:OPENAI_API_KEY="sua-chave-aqui"
 ```
 
 ## Execução
@@ -28,6 +28,10 @@ $env:OPENAI_API_KEY="vnvieira"
 ```bash
 python app.py
 ```
+
+> Em ambientes remotos sem display gráfico, como alguns containers e sessões
+> SSH, a interface Tkinter não pode ser aberta diretamente. Use um desktop com
+> X11/Wayland ou configure o encaminhamento gráfico antes de executar o app.
 
 O botão **Selecionar arquivo** carrega o texto do PDF ou DOCX. Depois, use
 **Processar currículo**, **Traduzir para inglês** e **Salvar resultado**.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
+from tkinter import TclError
 
 from ia.processador import processar_curriculo
 from leitor.documentos import ler_documento
@@ -141,7 +142,14 @@ class Aplicacao:
 
 
 def main() -> None:
-    root = tk.Tk()
+    try:
+        root = tk.Tk()
+    except TclError as erro:
+        raise SystemExit(
+            "Não foi possível iniciar a interface gráfica. "
+            "Execute em um ambiente com display (X11/Wayland) ou "
+            "configure o encaminhamento gráfico do seu ambiente remoto."
+        ) from erro
     Aplicacao(root)
     root.mainloop()
 
