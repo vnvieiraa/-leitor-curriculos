@@ -6,11 +6,14 @@ import json
 import os
 from typing import Any
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from ia.processador import analisar_curriculos_com_ia
+from ia.processador import _obter_chave_openai, analisar_curriculos_com_ia
+
+load_dotenv()
 
 app = FastAPI(title="Leitor de Currículos API")
 app.add_middleware(
@@ -32,7 +35,12 @@ class AnaliseEntrada(BaseModel):
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "ai_configured": str(bool(os.getenv("OPENAI_API_KEY"))).lower()}
+    try:
+        _obter_chave_openai()
+        ai_configured = "true"
+    except RuntimeError:
+        ai_configured = "false"
+    return {"status": "ok", "ai_configured": ai_configured}
 
 
 @app.post("/api/analyze")

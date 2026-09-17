@@ -6,6 +6,36 @@ import os
 import json
 from typing import Any
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def _obter_chave_openai() -> str:
+    """Retorna a chave real da OpenAI ou informa quando o valor ainda é placeholder."""
+    chave = (os.getenv("OPENAI_API_KEY") or "").strip()
+    if not chave:
+        raise RuntimeError(
+            "OPENAI_API_KEY não configurada. Defina essa variável antes de usar a IA."
+        )
+
+    exemplos = {
+        "suachaveaqui",
+        "sua-chave-aqui",
+        "sua_chave_aqui",
+        "coloque_sua_chave_aqui",
+        "your-openai-key",
+        "youropenaikey",
+        "changeme",
+        "replace-me",
+    }
+    valor_normalizado = chave.lower().replace("-", "").replace("_", "").replace(" ", "")
+    if valor_normalizado in exemplos or "sua-chave" in chave.lower() or "coloque_sua" in chave.lower():
+        raise RuntimeError(
+            "OPENAI_API_KEY ainda está com o valor de exemplo. Substitua pela chave real da OpenAI."
+        )
+    return chave
+
 
 def processar_curriculo(texto: str, *, traduzir: bool = False) -> str:
     """Processa um currículo e retorna o texto revisado ou traduzido.
@@ -15,11 +45,7 @@ def processar_curriculo(texto: str, *, traduzir: bool = False) -> str:
     if not texto.strip():
         raise RuntimeError("O currículo está vazio.")
 
-    chave = os.getenv("OPENAI_API_KEY")
-    if not chave:
-        raise RuntimeError(
-            "OPENAI_API_KEY não configurada. Defina essa variável antes de usar a IA."
-        )
+    chave = _obter_chave_openai()
 
     try:
         from openai import APIError, OpenAI
@@ -56,12 +82,7 @@ def analisar_curriculos_com_ia(curriculos: list[dict[str, str]]) -> list[dict[st
     if not curriculos:
         raise ValueError("Envie pelo menos um currículo.")
 
-    chave = os.getenv("OPENAI_API_KEY")
-    if not chave:
-        raise RuntimeError(
-            "OPENAI_API_KEY não configurada no servidor. "
-            "Defina a variável antes de iniciar a API."
-        )
+    chave = _obter_chave_openai()
 
     try:
         from openai import APIError, OpenAI

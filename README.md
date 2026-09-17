@@ -11,7 +11,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Defina a chave da API antes de usar os botões de processamento:
+Crie um arquivo `.env` na raiz do projeto com sua chave da API:
+
+```dotenv
+OPENAI_API_KEY=sua-chave-aqui
+OPENAI_MODEL=gpt-4o-mini
+```
+
+Também é possível definir a variável manualmente no terminal antes de executar o app:
 
 ```bash
 export OPENAI_API_KEY="sua-chave-aqui"
@@ -28,7 +35,6 @@ $env:OPENAI_API_KEY="sua-chave-aqui"
 Para usar a interface web com integração de IA:
 
 ```bash
-export OPENAI_API_KEY="sua-chave-aqui"
 python server.py
 ```
 
