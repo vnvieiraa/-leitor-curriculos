@@ -21,13 +21,13 @@ OPENAI_MODEL=gpt-4o-mini
 Também é possível definir a variável manualmente no terminal antes de executar o app:
 
 ```bash
-export OPENAI_API_KEY="sua-chave-aqui"
+export OPENAI_API_KEY="sua-chave-real-aqui"
 ```
 
 No Windows PowerShell:
 
 ```powershell
-$env:OPENAI_API_KEY="sua-chave-aqui"
+$env:OPENAI_API_KEY="sua-chave-real-aqui"
 ```
 
 ## Execução
