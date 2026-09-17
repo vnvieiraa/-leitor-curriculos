@@ -1,7 +1,8 @@
 # Leitor de Currículos com IA
 
-Aplicativo desktop em Python/Tkinter para ler currículos em PDF ou DOCX, revisar
-o texto em português e traduzir o resultado para inglês usando a API da OpenAI.
+Assistente para leitura e mapeamento de currículos em PDF, com análise de
+tecnologia, bancos de dados e geração de relatórios editáveis. Também oferece
+revisão e tradução de currículos em PDF ou DOCX usando a API da OpenAI.
 
 ## Instalação
 
