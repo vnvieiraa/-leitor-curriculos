@@ -2,13 +2,50 @@
 
 from __future__ import annotations
 
-import os
 import json
+import os
 from typing import Any
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def _normalizar_texto(texto: str | None) -> str:
+    """Valida e normaliza o texto do currículo para evitar falhas de entrada."""
+    if not isinstance(texto, str):
+        raise RuntimeError("O currículo está vazio.")
+
+    texto = texto.strip()
+    if not texto:
+        raise RuntimeError("O currículo está vazio.")
+    return texto
+
+
+def _extrair_texto_resposta(resposta: Any) -> str:
+    """Extrai o texto de uma resposta da API de IA em diferentes versões do SDK."""
+    if hasattr(resposta, "output_text"):
+        output_text = getattr(resposta, "output_text")
+        if isinstance(output_text, str):
+            return output_text.strip()
+
+    output = getattr(resposta, "output", None)
+    if isinstance(output, list):
+        partes: list[str] = []
+        for item in output:
+            if not isinstance(item, dict):
+                continue
+            for bloco in item.get("content", []):
+                if not isinstance(bloco, dict):
+                    continue
+                texto = bloco.get("text")
+                if isinstance(texto, str):
+                    partes.append(texto)
+        texto_combinado = "".join(partes).strip()
+        if texto_combinado:
+            return texto_combinado
+
+    raise RuntimeError("A API de IA retornou uma resposta vazia.")
 
 
 def _obter_chave_openai() -> str:
@@ -37,13 +74,12 @@ def _obter_chave_openai() -> str:
     return chave
 
 
-def processar_curriculo(texto: str, *, traduzir: bool = False) -> str:
+def processar_curriculo(texto: str | None, *, traduzir: bool = False) -> str:
     """Processa um currículo e retorna o texto revisado ou traduzido.
 
     A chave OPENAI_API_KEY é obrigatória para o processamento com IA.
     """
-    if not texto.strip():
-        raise RuntimeError("O currículo está vazio.")
+    texto = _normalizar_texto(texto)
 
     chave = _obter_chave_openai()
 
@@ -68,24 +104,26 @@ def processar_curriculo(texto: str, *, traduzir: bool = False) -> str:
             model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             input=prompt,
         )
-    except APIError as erro:
+    except Exception as erro:  # pragma: no cover - depende da versão do SDK
         raise RuntimeError(f"Falha na comunicação com a API de IA: {erro}") from erro
 
-    resultado = resposta.output_text.strip()
+    resultado = _extrair_texto_resposta(resposta)
     if not resultado:
         raise RuntimeError("A API de IA retornou uma resposta vazia.")
     return resultado
 
 
-def analisar_curriculos_com_ia(curriculos: list[dict[str, str]]) -> list[dict[str, Any]]:
+def analisar_curriculos_com_ia(curriculos: list[dict[str, str]] | None) -> list[dict[str, Any]]:
     """Extrai dados estruturados de currículos usando a API da OpenAI."""
-    if not curriculos:
+    if not isinstance(curriculos, list) or not curriculos:
         raise ValueError("Envie pelo menos um currículo.")
+    if any(not isinstance(item, dict) for item in curriculos):
+        raise ValueError("Cada currículo deve ser um dicionário com nome e texto.")
 
     chave = _obter_chave_openai()
 
     try:
-        from openai import APIError, OpenAI
+        from openai import OpenAI
     except ImportError as erro:
         raise RuntimeError("Instale a dependência 'openai' para usar a IA.") from erro
 
@@ -103,11 +141,12 @@ def analisar_curriculos_com_ia(curriculos: list[dict[str, str]]) -> list[dict[st
             model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             input=prompt,
         )
-    except APIError as erro:
+    except Exception as erro:  # pragma: no cover - depende da versão do SDK
         raise RuntimeError(f"Falha na comunicação com a API de IA: {erro}") from erro
 
+    texto_resposta = _extrair_texto_resposta(resposta)
     try:
-        dados = json.loads(resposta.output_text)
+        dados = json.loads(texto_resposta)
         resultados = dados["results"]
     except (json.JSONDecodeError, KeyError, TypeError) as erro:
         raise ValueError("A IA retornou um formato de análise inválido.") from erro
