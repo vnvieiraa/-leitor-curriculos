@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Mapping
 from typing import Any
 
 from dotenv import load_dotenv
@@ -33,12 +34,17 @@ def _extrair_texto_resposta(resposta: Any) -> str:
     if isinstance(output, list):
         partes: list[str] = []
         for item in output:
-            if not isinstance(item, dict):
-                continue
-            for bloco in item.get("content", []):
-                if not isinstance(bloco, dict):
-                    continue
-                texto = bloco.get("text")
+            conteudo = (
+                item.get("content", [])
+                if isinstance(item, Mapping)
+                else getattr(item, "content", [])
+            )
+            for bloco in conteudo:
+                texto = (
+                    bloco.get("text")
+                    if isinstance(bloco, Mapping)
+                    else getattr(bloco, "text", None)
+                )
                 if isinstance(texto, str):
                     partes.append(texto)
         texto_combinado = "".join(partes).strip()
@@ -145,8 +151,17 @@ def analisar_curriculos_com_ia(curriculos: list[dict[str, str]] | None) -> list[
         raise RuntimeError(f"Falha na comunicação com a API de IA: {erro}") from erro
 
     texto_resposta = _extrair_texto_resposta(resposta)
+    texto_json = texto_resposta.strip()
+    if texto_json.startswith("```"):
+        linhas = texto_json.splitlines()
+        if linhas and linhas[0].startswith("```"):
+            linhas = linhas[1:]
+        if linhas and linhas[-1].strip() == "```":
+            linhas = linhas[:-1]
+        texto_json = "\n".join(linhas).strip()
+
     try:
-        dados = json.loads(texto_resposta)
+        dados = json.loads(texto_json)
         resultados = dados["results"]
     except (json.JSONDecodeError, KeyError, TypeError) as erro:
         raise ValueError("A IA retornou um formato de análise inválido.") from erro
